@@ -20,4 +20,25 @@ class AuthResourceTest {
                 .body("user.username", is("student"))
                 .body("token", notNullValue());
     }
+
+    @Test
+    void rejectsInvalidPassword() {
+        given()
+                .contentType("application/json")
+                .body("{\"username\":\"student\",\"password\":\"invalid-password\"}")
+                .when().post("/auth/login")
+                .then()
+                .statusCode(401)
+                .body("message", is("Invalid user student or password"));
+    }
+
+    @Test
+    void rejectsUsernameContainingQuote() {
+        given()
+                .contentType("application/json")
+                .body("{\"username\":\"student'\",\"password\":\"Workshop123!\"}")
+                .when().post("/auth/login")
+                .then()
+                .statusCode(401);
+    }
 }
