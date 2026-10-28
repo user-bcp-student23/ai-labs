@@ -43,6 +43,8 @@ docker compose up --build
 
 Abre http://localhost:4200. Usuario ficticio student, contraseña Workshop123!. Autenticación publica http://localhost:8080/q/health y la API http://localhost:8000/docs. La primera ejecución descarga imágenes y dependencias. Espera a que los tres servicios respondan: el orden de arranque no certifica que estén listos.
 
+El servidor de autenticación firma los JWT con `SECRET`, que debe contener al menos 32 bytes. Provisiónala desde el gestor centralizado antes de arrancar; Compose la entrega a auth y api para que la API pueda verificar los tokens. No guardes su valor en el repositorio ni en evidencias.
+
 En otra terminal puedes ver el estado y la salida:
 
 ```bash
@@ -55,6 +57,8 @@ Al terminar, Ctrl+C y después docker compose down. Esto conserva los volúmenes
 ## Ejecutar un componente
 
 Para desarrollar sin contenedores necesitas JDK 21 y Maven 3.9+ para auth; Python 3.13 para api; Node.js 22.12+ y npm para web. Usa una terminal por servicio y ejecuta los comandos desde la raíz:
+
+Al iniciar auth localmente, asegúrate de que `SECRET` esté definida en el entorno. En las pruebas de auth se usa una clave aislada de test.
 
 ```bash
 python tools/lab.py setup auth

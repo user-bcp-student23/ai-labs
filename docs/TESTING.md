@@ -225,3 +225,7 @@ Coverage.py ejecutó medición de sentencias y ramas con `--cov=app --cov-report
 
 - `README.md`, `RETO.md`, `docs/GOOD_PRACTICES.md`, `HALLAZGOS.md`, `PLAN.md` y `docs/ENDPOINTS.md`.
 - Código del alcance `api/`: `api/app/main.py`, `api/app/schemas.py`, `api/app/security.py`, `api/app/services/task_service.py`, `api/app/services/upload_service.py` y `api/tests/test_api.py`.
+
+## Componente auth — H-AUTH-01
+
+La suite comprueba que `POST /auth/login` conserva su respuesta observable, que el JWT se firma con HS256 e incluye los claims del contrato, que su expiración no excede 300 segundos, que una firma alterada falla y que una clave menor a 32 bytes se rechaza. Los resultados y pendientes reales están en [EVIDENCIA-AUTH.md](../EVIDENCIA-AUTH.md).
