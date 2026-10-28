@@ -130,3 +130,9 @@ El usuario eligio **“Fix all issues”** para las observaciones concretas de l
 - **2026-10-26; componente api; IDs H-API-03, H-API-06; diff:** `git diff --check -- api` — sin errores.
 
 **Pendientes que no se declararon resueltos:** H-API-01/02 requieren confirmacion real del emisor JWT y del despliegue de `SECRET`; H-API-06 conserva la deuda de capas; H-API-07 requiere un escaneo reproducible de dependencias. La cobertura global no certifica por si sola el porcentaje del diff, pero las lineas funcionales añadidas por este addendum fueron ejecutadas por sus pruebas de regresion.
+
+## Addendum — emisor auth H-AUTH-01
+
+La implementación de `auth` ahora emite JWT HS256 con `iss=ISS`, `aud=CLAIM`, `username`, `role` y `exp` limitado a 300 segundos. La clave procede de `SECRET`; Compose la comparte entre auth y api. Se conserva el contrato de `POST /auth/login`; auth deja de emitir el formato legacy y el contrato indica que los consumidores no deben aceptarlo. El detalle está en `auth/contracts/tracking-processor-v1.yaml`.
+
+**Validación:** `python tools/lab.py test auth` — 12 pasaron; `python tools/lab.py test api` — 42 pasaron. La integración con TrackingProcessor v1.0 y el despliegue real del secreto siguen pendientes de coordinación y revisión humana; el cambio no declara resuelto H-API-01.

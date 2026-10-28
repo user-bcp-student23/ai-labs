@@ -1,0 +1,58 @@
+apiVersion: "1.0"
+kind: AuthenticationTokenContract
+metadata:
+  name: tracking-processor-auth
+  status: draft-for-api-governance-review
+  owner: API Governance
+  consumer:
+    name: TrackingProcessor
+    version: "1.0"
+  producer: centralized-auth-server
+
+login:
+  method: POST
+  path: /auth/login
+  successfulResponse:
+    status: 200
+    tokenField: token
+    expiresIn:
+      field: expiresIn
+      unit: seconds
+      value: 300
+    userFields:
+      - username
+      - displayName
+      - role
+  invalidCredentialsResponse:
+    status: 401
+
+token:
+  format: JWT
+  signature:
+    required: true
+    algorithm: HS256
+    keyManagement: centralized-auth-server
+    environmentVariable: SECRET
+    minimumKeyLengthBytes: 32
+  expiration:
+    claim: exp
+    maximumLifetimeSeconds: 300
+  claims:
+    required:
+      - iss
+      - aud
+      - exp
+      - username
+      - role
+    issuer: ISS
+    audience: CLAIM
+  legacyTokenAcceptance: false
+
+clientCompatibility:
+  clientId:
+    policy: preserve-existing
+    valueIncluded: false
+  clientCredential:
+    policy: preserve-existing
+    managedBy: centralized-auth-server
+    valueIncluded: false

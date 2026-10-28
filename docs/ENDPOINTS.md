@@ -4,7 +4,7 @@
 
 - **Contrato observado:** derivado del código actual de `api/` y de comprobaciones locales con `TestClient`; las rutas y formatos exitosos existentes se conservaron en las pruebas.
 - **Contrato acordado:** el usuario confirmó JWT HS256 con `iss=ISS`, `aud=CLAIM`, `exp` y username/role requeridos, clave de entorno `SECRET`; la API responde 403 ante owner distinto; cargas `.txt` y `.pdf` hasta 4 bytes responden 201 y colisiones reciben nombre único; extensión inválida responde 415 y tamaño excedido 413, ambos con `{"detail":"Invalid upload"}`.
-- **Riesgos y preguntas pendientes:** falta coordinar y comprobar que el emisor externo produzca JWT compatibles y configure `SECRET`. Los valores de `AUTH_HEALTH_URL` y `WORKSHOP_UPLOAD_DIR` pueden cambiar según el entorno.
+- **Riesgos y preguntas pendientes:** el servidor de autenticación centralizado emite JWT conforme al contrato local; falta validar la integración real con TrackingProcessor v1.0 y provisionar `SECRET` en ambos servicios. Los valores de `AUTH_HEALTH_URL` y `WORKSHOP_UPLOAD_DIR` pueden cambiar según el entorno.
 - **H-API-03:** los valores SQL dinamicos de filtros, inserciones y lectura por ID se enlazan como parametros SQLite; hallazgo Resuelto.
 
 ## Autenticación compartida
@@ -15,7 +15,9 @@ Las cinco rutas documentadas requieren el header:
 Authorization: Bearer <token>
 ```
 
-El API no expone una ruta para emitir tokens. Valida la firma HS256, `iss=ISS`, `aud=CLAIM`, `exp`, `username` y `role`; la clave de verificación se lee de la variable de entorno `SECRET` y debe tener al menos 32 bytes. Los ejemplos usan `$API_TOKEN` como variable del cliente: debe contener un JWT compatible obtenido por el mecanismo configurado fuera de esta API. **Pregunta abierta:** confirmar el emisor y el procedimiento de obtención del token para integración.
+El API no expone una ruta para emitir tokens. Valida la firma HS256, `iss=ISS`, `aud=CLAIM`, `exp`, `username` y `role`; la clave de verificación se lee de la variable de entorno `SECRET` y debe tener al menos 32 bytes. Los ejemplos usan `$API_TOKEN` como variable del cliente: debe contener un JWT compatible obtenido por el mecanismo configurado fuera de esta API. **Pendiente:** validar la integración real con TrackingProcessor v1.0.
+
+El servidor centralizado de autenticación emite los tokens mediante `POST /auth/login`. El contrato de emisión para TrackingProcessor v1.0 está en [`auth/contracts/tracking-processor-v1.yaml`](../auth/contracts/tracking-processor-v1.yaml); esta API no incluye una muestra de token ni valores de credenciales.
 
 Si falta el header o el token no se valida, las rutas responden HTTP 401. Ejemplo comprobado sin header:
 
@@ -410,4 +412,4 @@ La URL puede ser configurada mediante `AUTH_HEALTH_URL`; el body recibido del se
 
 ## Preguntas abiertas
 
-1. ¿Qué servicio emite el JWT HS256 con `iss=ISS`, `aud=CLAIM`, `exp`, `username` y `role`, y cómo se provisiona `SECRET` en el entorno de API? La API no emite tokens y esta página no incluye un token real.
+1. Falta validar la integración con TrackingProcessor v1.0 y coordinar el aprovisionamiento de `SECRET` para auth y api. La API no emite tokens y esta página no incluye un token real.
