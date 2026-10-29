@@ -26,9 +26,9 @@
 | H-API-06 | api | Tipado con diccionarios, excepciones amplias, anidamiento y logica repetida | Refactor | La respuesta de health ahora usa un modelo Pydantic y captura solo errores HTTP de urllib3, sin devolver detalles internos. Sigue pendiente separar persistencia y responsabilidades de las rutas. | api/app/main.py:142-158; api/app/schemas.py:47-52 | media | Pendiente — corregidos el acceso a la identidad y el error verboso de health; permanece pendiente la separacion de persistencia y otras mejoras de calidad. |
 | H-API-07 | api | Evaluacion SCA de dependencias pendiente | Sugerencia | Los manifiestos fijan versiones de dependencias, pero el escaneo especifico Python no esta disponible en la herramienta configurada; se verifico PyJWT 2.15.1 con fuentes publicas, pero falta un escaneo reproducible de todo el entorno resuelto. | api/requirements.txt:1-6 | baja | Pendiente |
 
-## auth — hallazgos candidatos y en revisión
+## auth — hallazgos candidatos y en revisión 
 
-### H-AUTH-01 — Token de login sin firma criptográfica y con valor estático embebido
+### H-AUTH-01 — Token de login sin firma criptográfica y con valor estático embebido CONFIRMADO
 - Estado: Implementado; pruebas locales aprobadas; pendiente revisión humana y validación de integración con TrackingProcessor v1.0.
 - Evidencia del estado previo: `auth/src/main/java/com/bcp/workshop/auth/LegacyTokenUtil.java:8,12-15` concatenaba username, role y expiración con un valor estático, y codificaba el resultado con Base64.
 - Evidencia de implementación: `auth/src/main/java/com/bcp/workshop/auth/TokenIssuer.java:20-57`; `auth/src/main/java/com/bcp/workshop/auth/AuthResource.java:42-45`; `auth/src/test/java/com/bcp/workshop/auth/TokenIssuerTest.java:19-55`.
@@ -38,7 +38,7 @@
 - Contrato potencialmente afectado: formato, integridad y expiración del campo `token` en `POST /auth/login`.
 - Cómo validarlo: probar el token emitido con el verificador acordado; comprobar que acepta solo tokens autenticados y vigentes y rechaza contenido alterado.
 
-### H-AUTH-02 — Credenciales almacenadas en texto plano
+### H-AUTH-02 — Credenciales almacenadas en texto plano CONFIRMADO
 - Estado: CANDIDATO
 - Evidencia: `auth/src/main/java/com/bcp/workshop/auth/LegacyDatabase.java:24-26` define una columna `password` y carga usuarios iniciales con valores directos.
 - Impacto: quien obtenga una copia de la base de datos podría leer las credenciales almacenadas.
@@ -46,7 +46,7 @@
 - Contrato potencialmente afectado: persistencia y verificación de credenciales detrás de `POST /auth/login`.
 - Cómo validarlo: en una base SQLite aislada de pruebas, comprobar que el almacenamiento no contiene contraseñas en texto plano y que el login válido e inválido conserva sus respuestas esperadas.
 
-### H-AUTH-03 — La respuesta HTTP 500 expone detalles de excepción
+### H-AUTH-03 — La respuesta HTTP 500 expone detalles de excepción CONFIRMADO
 - Estado: CANDIDATO
 - Evidencia: `auth/src/main/java/com/bcp/workshop/auth/AuthResource.java:54-58` devuelve el mensaje y el nombre de clase de cualquier excepción capturada.
 - Impacto: la respuesta puede revelar detalles internos de implementación o persistencia al cliente.
@@ -54,7 +54,7 @@
 - Contrato potencialmente afectado: cuerpo de error de `POST /auth/login` cuando ocurre una falla interna.
 - Cómo validarlo: provocar una falla controlada en una prueba de integración y comprobar que la respuesta mantiene el error esperado sin incluir mensajes ni clases internas.
 
-### H-AUTH-04 — Fallas de base de datos pueden presentarse como credenciales inválidas
+### H-AUTH-04 — Fallas de base de datos pueden presentarse como credenciales inválidas CONFIRMADO
 - Estado: CANDIDATO
 - Evidencia: `auth/src/main/java/com/bcp/workshop/auth/LegacyDatabase.java:28-29,43-46` captura errores de inicialización o consulta, imprime la traza y devuelve `null`; `auth/src/main/java/com/bcp/workshop/auth/AuthResource.java:35-37` convierte un resultado nulo en HTTP 401.
 - Impacto: una falla de persistencia puede ser indistinguible de credenciales incorrectas para el cliente y dificultar el diagnóstico operativo.

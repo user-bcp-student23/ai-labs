@@ -229,3 +229,21 @@ Coverage.py ejecutó medición de sentencias y ramas con `--cov=app --cov-report
 ## Componente auth — H-AUTH-01
 
 La suite comprueba que `POST /auth/login` conserva su respuesta observable, que el JWT se firma con HS256 e incluye los claims del contrato, que su expiración no excede 300 segundos, que una firma alterada falla y que una clave menor a 32 bytes se rechaza. Los resultados y pendientes reales están en [EVIDENCIA-AUTH.md](../EVIDENCIA-AUTH.md).
+
+## Componente api — Issue #28, H-API-01 y H-API-02
+
+### Caracterización y pruebas ejecutadas
+
+- Comportamiento protegido: acceso autenticado a tareas (HTTP 200), owner omitido/vacío ligado al username verificado, rechazos de token inválido/expirado/malformado o con claims incorrectos (HTTP 401), y owner distinto rechazado con HTTP 403 y el detalle documentado.
+- La prueba nueva `test_rejects_undersized_jwt_secret_without_disclosing_value` protege que una clave de prueba menor a 32 bytes produzca el error de configuración existente sin incluir el valor de la clave en el mensaje.
+
+| Comando | Directorio | Resultado |
+|---|---|---|
+| `python -m pytest tests/test_api.py -k "lists_seeded_tasks or empty_owner_query_uses_authenticated_identity or rejects_tasks_for_different_owner or rejects_malformed_bearer_header or rejects_invalid_token or rejects_token_with_invalid_issuer_or_audience or rejects_token_with_invalid_signature or rejects_token_missing_required_claim or rejects_expired_token or requires_configured_jwt_secret" -q` | `api/` | 12 pruebas pasaron. |
+| `python -m pytest tests/test_api.py -k "undersized_jwt_secret" -q` | `api/` | 1 prueba pasó. |
+| `python -m pytest` | `api/` | 43 pruebas pasaron en 1,36 s; 83 warnings deprecados de FastAPI/Starlette. |
+| `openspec validate "validate-api-jwt-integration" --type change --json` | raíz de `ai-labs/` | Válido: 1 cambio aprobado por el validador, 0 errores. |
+
+### Integración externa
+
+**Bloqueada / no ejecutada.** Emisor objetivo: TrackingProcessor v1.0; entorno no productivo e identidad: no especificados/aprobados en el design. La consulta de presencia `[bool][Environment]::GetEnvironmentVariable('SECRET')` devolvió `False` (sin leer ni mostrar el valor). No se usó ni registró ningún token, secreto o credencial; no se atribuye éxito a la integración externa.

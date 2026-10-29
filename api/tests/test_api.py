@@ -461,6 +461,17 @@ def test_requires_configured_jwt_secret(monkeypatch: pytest.MonkeyPatch) -> None
         verified_identity(authorization="Bearer token")
 
 
+def test_rejects_undersized_jwt_secret_without_disclosing_value(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    test_secret = "short-test-only-key"
+    monkeypatch.setenv("SECRET", test_secret)
+    with pytest.raises(RuntimeError) as error:
+        verified_identity(authorization="Bearer token")
+    assert str(error.value) == "JWT verification key is not configured correctly"
+    assert test_secret not in str(error.value)
+
+
 def test_rejects_invalid_token(tmp_path: Path) -> None:
     app = create_app(str(tmp_path / "workshop.db"), str(tmp_path / "uploads"))
     with TestClient(app) as client:
