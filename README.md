@@ -71,6 +71,23 @@ python tools/lab.py setup web
 python tools/lab.py start web
 ```
 
+`web/` usa los servicios locales durante desarrollo (`http://localhost:8080` y
+`http://localhost:8000`). El build de producción requiere definir
+`AUTH_SERVICE_ORIGIN` y `API_SERVICE_ORIGIN` como orígenes HTTP(S), sin paths ni
+secretos; si falta alguno, el build falla explícitamente. En PowerShell:
+
+```powershell
+$env:AUTH_SERVICE_ORIGIN = "https://auth.example.invalid"
+$env:API_SERVICE_ORIGIN = "https://api.example.invalid"
+Set-Location web
+npm run build
+```
+
+Los dominios `.example.invalid` son valores ilustrativos y deben reemplazarse
+por los orígenes aprobados. El Dockerfile de `web/` usa el build de desarrollo
+por defecto; para producción, pasa `ANGULAR_BUILD_CONFIGURATION=production` y
+ambos orígenes como argumentos de build.
+
 En macOS/Linux, python3 puede ser el nombre del intérprete. Usa Python 3.13 para setup api. El script crea api/.venv si falta y no lo comparte con otros proyectos. Si ejecutas un solo componente, registra las integraciones que no pudiste probar. No arranques Compose y los procesos locales sobre los mismos puertos.
 
 La API requiere la variable de entorno `WORKSHOP_TOKEN_SECRET` antes de arrancar; si falta, la app no inicia. Usa un valor propio y no lo subas al repositorio. Los tokens de `api/` deben estar firmados con ese secreto e incluir `iss=ai-labs-auth` y `aud=ai-labs-api`. Los tokens del formato anterior (base64 con separador `|`) ya no son válidos.

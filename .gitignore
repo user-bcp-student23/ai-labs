@@ -15,6 +15,7 @@
 **/.env
 **/.env.*
 !**/.env.example
+**/src/environments/environment.production.generated.ts
 api/uploads/*
 !api/uploads/.gitkeep
 output/

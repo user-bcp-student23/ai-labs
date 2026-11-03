@@ -2,6 +2,7 @@ import { CommonModule } from '@angular/common';
 import { ChangeDetectorRef, Component, NgZone, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import axios from 'axios';
+import { serviceEndpoints } from '../config/service-endpoints';
 import { formatTaskLabel } from '../utils/legacy-format';
 
 const STATUS_LABELS: Record<string, string> = {
@@ -40,7 +41,7 @@ export class DashboardComponent implements OnInit {
       return;
     }
     try {
-      const response: any = await axios.get('http://localhost:8000/api/tasks?owner=' + (this.user.username || ''), {
+      const response: any = await axios.get(`${serviceEndpoints.tasks}?owner=` + (this.user.username || ''), {
         headers: { Authorization: 'Bearer ' + token }
       });
       const tasks = response.data;

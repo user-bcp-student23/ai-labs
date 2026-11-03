@@ -23,3 +23,56 @@ Matriz de seguimiento del componente `api` (Discovery). Ordenada de mayor a meno
 - Contrato observado en código, sin `docs/ENDPOINTS.md` (no existe; no se creó en este paso): `GET /api/tasks`, `POST /api/tasks`, `GET /api/summary`, `POST /api/requirements`, `GET /api/backend-health`.
 - Todos los hallazgos de `RETO.md` para `api` aparecen en el código; ninguno quedó como `No encontrado`.
 - No se ejecutaron pruebas ni consultas de advisories en esta ejecución. Pendiente: verificar CVE de H-API-06 y confirmar H-API-01/02 con pruebas locales.
+
+## Componente web — Discovery
+
+Hallazgos candidatos basados en la lectura estática de `web/`. No se modificó código. La suite no pudo ejecutarse porque no están disponibles las dependencias de Node (`vitest`).
+
+### H-WEB-01 — Mensaje de login dinámico renderizado como HTML
+- Estado: CANDIDATO
+- Evidencia: `web/src/app/login/login.component.html:39` enlaza `message` con `[innerHTML]`; `web/src/app/login/login.component.ts:55-56` construye ese mensaje con el nombre ingresado y el mensaje de error devuelto por el backend. Angular sanitiza contenido enlazado a `innerHTML`; no se comprobó ejecución de contenido activo.
+- Impacto: los datos de usuario y de la respuesta remota cruzan un límite de confianza y se interpretan como markup, con riesgo de presentación manipulada y dependencia de la sanitización del framework.
+- Prioridad propuesta: Media.
+- Contrato potencialmente afectado: presentación de errores del flujo `POST /auth/login`.
+- Cómo validarlo: probar el componente con nombre y mensaje de error que contengan markup; verificar que se muestran como texto y no crean elementos activos, conservando el formato esperado del error.
+
+### H-WEB-02 — Token de sesión accesible desde JavaScript en `localStorage`
+- Estado: CANDIDATO
+- Evidencia: `web/src/app/login/login.component.ts:47` guarda el token en `workshop_token`; `web/src/app/dashboard/dashboard.component.ts:36,43` lo lee y lo envía como `Authorization`.
+- Impacto: cualquier script que llegue a ejecutarse en el mismo origen puede leer el bearer token y reutilizar la sesión hasta que deje de ser válido; el almacenamiento por sí solo no demuestra una vulnerabilidad explotable.
+- Prioridad propuesta: Media.
+- Contrato potencialmente afectado: sesión iniciada por `POST /auth/login` y autenticación de `GET /api/tasks`.
+- Cómo validarlo: verificar en un navegador de prueba el almacenamiento, duración y eliminación del token al cerrar sesión; revisar la decisión de almacenamiento frente al modelo de amenaza del laboratorio y probar que solicitudes sin token siguen la respuesta de autenticación esperada.
+
+### H-WEB-03 — JSON de usuario persistido se analiza fuera del manejo de errores
+- Estado: CANDIDATO
+- Evidencia: `web/src/app/dashboard/dashboard.component.ts:36-37` lee `workshop_token` y ejecuta `JSON.parse` sobre `workshop_user` antes del bloque `try` que comienza en la línea 42.
+- Impacto: un valor persistido vacío, corrupto o incompatible puede lanzar una excepción durante `ngOnInit` e impedir que el dashboard cargue o redirija de forma controlada.
+- Prioridad propuesta: Media.
+- Contrato potencialmente afectado: restauración de sesión y navegación a `/dashboard` tras el login.
+- Cómo validarlo: en un entorno local, guardar texto JSON inválido en `workshop_user`, navegar a `/dashboard` y comprobar que la aplicación responde con una recuperación o redirección controlada, sin excepción no gestionada.
+
+### H-WEB-04 — URLs de servicios fijadas en los componentes
+- Estado: Resuelto
+- Evidencia: `web/src/app/login/login.component.ts:41-43` llama directamente a `http://localhost:8080/auth/login`; `web/src/app/dashboard/dashboard.component.ts:43` llama directamente a `http://localhost:8000/api/tasks`.
+- Impacto: el frontend queda acoplado a puertos de localhost y los componentes combinan transporte con sesión y navegación, lo que dificulta cambiar el entorno y probar los flujos de forma aislada.
+- Prioridad propuesta: Media.
+- Contrato potencialmente afectado: conservación de `POST /auth/login` y `GET /api/tasks` al cambiar el host o entorno.
+- Evidencia de resolución: `web/src/environments/environment.ts` define los orígenes locales; el build de producción genera configuración desde `AUTH_SERVICE_ORIGIN` y `API_SERVICE_ORIGIN`, y rechaza valores ausentes o que no sean orígenes HTTP(S). Los componentes usan los endpoints centralizados en `web/src/app/config/service-endpoints.ts`.
+- Validación ejecutada: `npm run test:coverage` (13 pruebas pasaron; build script 87.75%, login 85.24%, dashboard 92.75%, endpoints 100%); build de desarrollo y build de producción con orígenes `.example.invalid` pasaron. El build de producción falló como se esperaba al faltar los orígenes.
+
+### H-WEB-05 — Cobertura parcial de escenarios en login y dashboard
+- Estado: CANDIDATO
+- Evidencia: `web/src/app/login/login.component.spec.ts:34` cubre el login válido; `web/src/app/dashboard/dashboard.component.spec.ts:35,69,93` cubre carga, error y logout. No se cubren todos los bordes, como credenciales inválidas o falta de token.
+- Impacto: algunos casos límite de autenticación y restauración de sesión todavía podrían cambiar sin que la suite los detecte.
+- Prioridad propuesta: Baja.
+- Contrato potencialmente afectado: flujos de login, dashboard y logout; endpoints `POST /auth/login` y `GET /api/tasks`.
+- Cómo validarlo: agregar pruebas para los casos límite pendientes y ejecutar `npm test` y `npm run test:coverage` desde `web/`.
+
+### H-WEB-06 — Alertas de vulnerabilidad en dependencias por clasificar
+- Estado: CANDIDATO
+- Evidencia: la instalación reproducible `npm ci` en `web/` reportó 43 vulnerabilidades: 27 moderadas, 10 altas y 6 críticas. No se identificaron en esta ejecución los paquetes, rutas de dependencia ni advisories concretos.
+- Impacto: podrían existir dependencias vulnerables en el árbol usado para compilar o ejecutar el frontend; el alcance y la exposición no están confirmados.
+- Prioridad propuesta: Alta, pendiente de verificar los paquetes y advisories.
+- Contrato potencialmente afectado: no determinado; posible seguridad e integridad del frontend.
+- Cómo validarlo: ejecutar `npm audit` en `web/`, revisar las dependencias directas y transitivas afectadas y confirmar versiones corregidas antes de proponer una remediación.

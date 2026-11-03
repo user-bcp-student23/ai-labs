@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import axios from 'axios';
 import merge from 'lodash/merge';
+import { serviceEndpoints } from '../config/service-endpoints';
 
 @Component({
   selector: 'app-login',
@@ -39,7 +40,7 @@ export class LoginComponent {
         this.busy = true;
         try {
           const response: any = await axios.post(
-            'http://localhost:8080/auth/login',
+            serviceEndpoints.login,
             { username: this.username, password: this.password, client: 'angular-workshop' },
             { timeout: 5000 }
           );
