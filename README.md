@@ -73,6 +73,10 @@ python tools/lab.py start web
 
 En macOS/Linux, python3 puede ser el nombre del intérprete. Usa Python 3.13 para setup api. El script crea api/.venv si falta y no lo comparte con otros proyectos. Si ejecutas un solo componente, registra las integraciones que no pudiste probar. No arranques Compose y los procesos locales sobre los mismos puertos.
 
+La API requiere la variable de entorno `WORKSHOP_TOKEN_SECRET` antes de arrancar; si falta, la app no inicia. Usa un valor propio y no lo subas al repositorio. Los tokens de `api/` deben estar firmados con ese secreto e incluir `iss=ai-labs-auth` y `aud=ai-labs-api`. Los tokens del formato anterior (base64 con separador `|`) ya no son válidos.
+
+Opcional: `WORKSHOP_CORS_ORIGIN` define el único origen permitido por CORS (por defecto `http://localhost:4200`).
+
 ## Lab 01, paso a paso
 
 Al comenzar se incluyen `README.md`, `AGENTS.md`, `RETO.md` y `docs/GOOD_PRACTICES.md` como referencias. El reto contiene candidatos por comprobar, no hallazgos confirmados. Los entregables `HALLAZGOS.md`, `PLAN.md`, `prompts/`, `docs/ENDPOINTS.md` y `docs/TESTING.md` se crean durante los pasos siguientes; no vienen preparados.
